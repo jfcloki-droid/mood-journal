@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>心情筆記</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #1E2230;
+    --paper: #EFE7D8;
+    --paper-soft: #F6F0E4;
+    --charcoal: #2B271F;
+    --charcoal-soft: #6b6355;
+    --accent: #8C6079;
+    --accent-soft: #C9A9BB;
+    --line: rgba(43,39,31,0.12);
+
+    --m-happy:  #E3A857;
+    --m-calm:   #74967A;
+    --m-sad:    #6B7FA3;
+    --m-cross:  #B25940;
+    --m-anxious:#9C6B84;
+    --m-grateful: #4F8383;
+    --m-none:   #A79E8D;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--ink);
+    color: var(--charcoal);
+    font-family:'Noto Sans TC', sans-serif;
+    min-height:100vh;
+  }
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(140,96,121,0.25), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(79,131,131,0.18), transparent 55%),
+      var(--ink);
+    padding: 48px 20px 80px;
+  }
+
+  .app{
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Header ---------- */
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent-soft);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  header{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    padding: 0 4px;
+  }
+
+  h1{
+    font-family:'Noto Serif TC', serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: #F6F0E4;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .today{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: rgba(246,240,228,0.55);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* ---------- Composer card ---------- */
+  .card{
+    background: var(--paper-soft);
+    border-radius: 4px;
+    padding: 26px 26px 22px;
+    box-shadow: 0 20px 40px -20px rgba(0,0,0,0.5);
+  }
+
+  .mood-row{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .mood-btn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding: 4px 2px;
+    font-family:'Noto Sans TC', sans-serif;
+  }
+
+  .mood-dot{
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+
+  .mood-btn:hover .mood-dot{ transform: scale(1.1); }
+
+  .mood-btn.selected .mood-dot{
+    border-color: var(--charcoal);
+    transform: scale(1.12);
+  }
+
+  .mood-label{
+    font-size: 11px;
+    color: var(--charcoal-soft);
+  }
+
+  .mood-btn.selected .mood-label{
+    color: var(--charcoal);
+    font-weight: 500;
+  }
+
+  textarea{
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    border: none;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    font-family:'Noto Serif TC', serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--charcoal);
+    padding: 14px 0;
+    outline: none;
+  }
+
+  textarea::placeholder{ color: rgba(43,39,31,0.38); }
+
+  .composer-footer{
+    display:flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 14px;
+    gap: 12px;
+  }
+
+  .hint{
+    font-size: 11px;
+    color: var(--charcoal-soft);
+    margin-right: auto;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .save-btn{
+    background: var(--accent);
+    color: #F6F0E4;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 3px;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .save-btn:hover{ background:#7A4F68; }
+  .save-btn:active{ transform: scale(0.97); }
+  .save-btn:disabled{
+    background: #C9BFAE;
+    cursor: not-allowed;
+  }
+
+  /* ---------- Memory banner ---------- */
+  .memory-wrap{
+    margin-bottom: 22px;
+    animation: rise .35s ease;
+  }
+  .memory-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .memory-title{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+  }
+  .memory-close{
+    background:none;
+    border:none;
+    cursor:pointer;
+    color: rgba(246,240,228,0.4);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+  .memory-close:hover{ color: rgba(246,240,228,0.8); }
+
+  .memory-card{
+    background: var(--paper-soft);
+    border: 1px solid var(--accent-soft);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+  }
+  .memory-badge{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: #F6F0E4;
+    background: var(--accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .memory-top{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .memory-text{
+    font-family:'Noto Serif TC', serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--charcoal);
+    white-space: pre-wrap;
+    margin: 6px 0 0;
+  }
+
+  /* ---------- Weekly stats ---------- */
+  .stats-card{
+    background: var(--paper-soft);
+    border-radius: 4px;
+    padding: 20px 24px 22px;
+    margin: 26px 0 8px;
+  }
+  .stats-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .stats-title{
+    font-family:'Noto Serif TC', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--charcoal);
+  }
+  .stats-range{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--charcoal-soft);
+  }
+  .stats-top{
+    font-size: 13px;
+    color: var(--charcoal-soft);
+    margin-bottom: 14px;
+  }
+  .stats-top b{ color: var(--charcoal); font-weight: 600; }
+
+  .stat-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 9px;
+  }
+  .stat-label{
+    width: 42px;
+    flex: 0 0 42px;
+    font-size: 12px;
+    color: var(--charcoal-soft);
+  }
+  .stat-bar-track{
+    flex: 1;
+    height: 8px;
+    background: rgba(43,39,31,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stat-bar-fill{
+    height: 100%;
+    border-radius: 4px;
+    transition: width .4s ease;
+  }
+  .stat-count{
+    width: 18px;
+    flex: 0 0 18px;
+    text-align: right;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--charcoal-soft);
+  }
+  .stats-empty{
+    font-size: 13px;
+    color: var(--charcoal-soft);
+    font-family:'Noto Sans TC', sans-serif;
+  }
+
+  /* ---------- Spectrum (signature element) ---------- */
+  .spectrum-wrap{
+    margin: 26px 4px 8px;
+  }
+  .spectrum-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(246,240,228,0.4);
+    margin-bottom: 10px;
+  }
+  .spectrum{
+    display:flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 26px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .spectrum::-webkit-scrollbar{ height: 4px; }
+  .spectrum::-webkit-scrollbar-thumb{ background: rgba(246,240,228,0.15); border-radius: 2px; }
+
+  .spectrum-dot{
+    flex: 0 0 auto;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    opacity: 0.85;
+    cursor: default;
+  }
+  .spectrum-empty{
+    font-size: 12px;
+    color: rgba(246,240,228,0.35);
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Entries ---------- */
+  .entries{
+    margin-top: 36px;
+  }
+
+  .date-group{
+    margin-bottom: 30px;
+  }
+
+  .date-heading{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(246,240,228,0.5);
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .entry{
+    background: var(--paper);
+    border-left: 4px solid var(--m-none);
+    border-radius: 2px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    position: relative;
+    animation: rise .3s ease;
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(6px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .entry-top{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .entry-mood{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size: 12px;
+    color: var(--charcoal-soft);
+    font-family:'Noto Sans TC', sans-serif;
+  }
+
+  .entry-mood .dot{
+    width:8px; height:8px; border-radius:50%;
+  }
+
+  .entry-time{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--charcoal-soft);
+  }
+
+  .entry-text{
+    font-family:'Noto Serif TC', serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--charcoal);
+    white-space: pre-wrap;
+    margin: 0;
+  }
+
+  .entry-actions{
+    display:flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+    gap: 8px;
+  }
+
+  .del-btn{
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--charcoal-soft);
+    opacity: 0;
+    transition: opacity .15s ease, color .15s ease;
+    padding: 2px 4px;
+  }
+  .entry:hover .del-btn{ opacity: 0.6; }
+  .del-btn:hover{ opacity: 1 !important; color: var(--m-cross); }
+  .del-btn.confirm{ opacity:1; color: var(--m-cross); font-weight:500; }
+
+  .empty-state{
+    text-align:center;
+    padding: 50px 20px;
+    color: rgba(246,240,228,0.45);
+    font-family:'Noto Sans TC', sans-serif;
+    font-size: 14px;
+  }
+  .empty-state .big{
+    font-family:'Noto Serif TC', serif;
+    font-size: 18px;
+    color: rgba(246,240,228,0.7);
+    margin-bottom: 6px;
+    display:block;
+  }
+
+  .loading{
+    text-align:center;
+    padding: 60px 20px;
+    color: rgba(246,240,228,0.4);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px){
+    h1{ font-size: 26px; }
+    .card{ padding: 20px 18px; }
+    .mood-label{ font-size: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .entry{ animation: none; }
+    .mood-btn:hover .mood-dot{ transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="eyebrow">私人・僅自己可見</div>
+  <header>
+    <h1>心情筆記</h1>
+    <div class="today" id="todayLabel"></div>
+  </header>
+
+  <div id="memoryWrap"></div>
+
+  <div class="card">
+    <div class="mood-row" id="moodRow"></div>
+    <textarea id="textInput" placeholder="現在，你的心裡在想什麼？"></textarea>
+    <div class="composer-footer">
+      <span class="hint" id="hintText">選一個心情，寫下此刻</span>
+      <button class="save-btn" id="saveBtn" disabled>記錄下來</button>
+    </div>
+  </div>
+
+  <div class="stats-card" id="statsCard"></div>
+
+  <div class="spectrum-wrap">
+    <div class="spectrum-label">情緒光譜 · 最近的紀錄</div>
+    <div class="spectrum" id="spectrum"><span class="spectrum-empty">還沒有紀錄</span></div>
+  </div>
+
+  <div class="entries" id="entries">
+    <div class="loading">讀取中…</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const MOODS = [
+    { id: 'happy',    label: '開心', color: 'var(--m-happy)'   },
+    { id: 'calm',     label: '平靜', color: 'var(--m-calm)'    },
+    { id: 'grateful', label: '感恩', color: 'var(--m-grateful)'},
+    { id: 'anxious',  label: '焦慮', color: 'var(--m-anxious)' },
+    { id: 'sad',      label: '難過', color: 'var(--m-sad)'     },
+    { id: 'cross',    label: '煩躁', color: 'var(--m-cross)'   },
+  ];
+  const moodMap = Object.fromEntries(MOODS.map(m => [m.id, m]));
+
+  let entries = [];
+  let selectedMood = null;
+  let memories = [];       // computed once at init: entries from "N years ago today"
+  let memoriesDismissed = false;
+
+  const $ = (id) => document.getElementById(id);
+  const moodRow = $('moodRow');
+  const textInput = $('textInput');
+  const saveBtn = $('saveBtn');
+  const hintText = $('hintText');
+  const entriesEl = $('entries');
+  const spectrumEl = $('spectrum');
+  const todayLabel = $('todayLabel');
+  const memoryWrap = $('memoryWrap');
+  const statsCard = $('statsCard');
+
+  todayLabel.textContent = new Date().toLocaleDateString('zh-TW', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+  });
+
+  // ---------- render mood picker ----------
+  MOODS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'mood-btn';
+    btn.type = 'button';
+    btn.innerHTML = `<span class="mood-dot" style="background:${m.color}"></span><span class="mood-label">${m.label}</span>`;
+    btn.addEventListener('click', () => {
+      selectedMood = (selectedMood === m.id) ? null : m.id;
+      renderMoodSelection();
+      updateSaveState();
+    });
+    btn.dataset.mood = m.id;
+    moodRow.appendChild(btn);
+  });
+
+  function renderMoodSelection(){
+    [...moodRow.children].forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.mood === selectedMood);
+    });
+  }
+
+  function updateSaveState(){
+    const hasText = textInput.value.trim().length > 0;
+    saveBtn.disabled = !(hasText && selectedMood);
+    if (!selectedMood && !hasText) hintText.textContent = '選一個心情，寫下此刻';
+    else if (!selectedMood) hintText.textContent = '選一個最貼近此刻的心情';
+    else if (!hasText) hintText.textContent = '寫點什麼吧，一句話也可以';
+    else hintText.textContent = '準備好了';
+  }
+  textInput.addEventListener('input', updateSaveState);
+
+  // ---------- storage ----------
+  async function loadEntries(){
+    try{
+      const res = await window.storage.get('entries');
+      return res && res.value ? JSON.parse(res.value) : [];
+    } catch(e){
+      return [];
+    }
+  }
+  async function persist(){
+    try{
+      const res = await window.storage.set('entries', JSON.stringify(entries));
+      if(!res) console.error('儲存失敗');
+    } catch(e){
+      console.error('儲存發生錯誤', e);
+    }
+  }
+
+  // ---------- save entry ----------
+  saveBtn.addEventListener('click', async () => {
+    const text = textInput.value.trim();
+    if (!text || !selectedMood) return;
+    const entry = {
+      id: 'e' + Date.now() + Math.random().toString(36).slice(2,7),
+      text,
+      mood: selectedMood,
+      ts: Date.now(),
+    };
+    entries.unshift(entry);
+    textInput.value = '';
+    selectedMood = null;
+    renderMoodSelection();
+    updateSaveState();
+    renderAll();
+    await persist();
+  });
+
+  // ---------- delete entry (two-step confirm) ----------
+  function attachDelete(btn, id){
+    let pending = false;
+    let timer = null;
+    btn.addEventListener('click', async () => {
+      if (!pending){
+        pending = true;
+        btn.textContent = '確定刪除？';
+        btn.classList.add('confirm');
+        timer = setTimeout(() => {
+          pending = false;
+          btn.textContent = '刪除';
+          btn.classList.remove('confirm');
+        }, 2800);
+        return;
+      }
+      clearTimeout(timer);
+      entries = entries.filter(e => e.id !== id);
+      renderAll();
+      await persist();
+    });
+  }
+
+  // ---------- rendering ----------
+  function formatDateKey(ts){
+    const d = new Date(ts);
+    return d.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'short' });
+  }
+  function formatTime(ts){
+    return new Date(ts).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  function renderSpectrum(){
+    spectrumEl.innerHTML = '';
+    if (entries.length === 0){
+      spectrumEl.innerHTML = '<span class="spectrum-empty">還沒有紀錄</span>';
+      return;
+    }
+    const recent = entries.slice(0, 80).slice().reverse(); // oldest -> newest, left to right
+    recent.forEach(e => {
+      const m = moodMap[e.mood];
+      const dot = document.createElement('div');
+      dot.className = 'spectrum-dot';
+      dot.style.background = m ? m.color : 'var(--m-none)';
+      dot.title = `${formatDateKey(e.ts)} · ${m ? m.label : '未分類'}`;
+      spectrumEl.appendChild(dot);
+    });
+  }
+
+  function renderEntries(){
+    entriesEl.innerHTML = '';
+    if (entries.length === 0){
+      entriesEl.innerHTML = `<div class="empty-state"><span class="big">還是一片空白</span>寫下今天的第一句話，開始紀錄。</div>`;
+      return;
+    }
+    const groups = [];
+    let currentKey = null, currentGroup = null;
+    entries.forEach(e => {
+      const key = formatDateKey(e.ts);
+      if (key !== currentKey){
+        currentKey = key;
+        currentGroup = { key, items: [] };
+        groups.push(currentGroup);
+      }
+      currentGroup.items.push(e);
+    });
+
+    groups.forEach(g => {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'date-group';
+      const heading = document.createElement('div');
+      heading.className = 'date-heading';
+      heading.textContent = g.key;
+      groupEl.appendChild(heading);
+
+      g.items.forEach(e => {
+        const m = moodMap[e.mood];
+        const card = document.createElement('div');
+        card.className = 'entry';
+        card.style.borderLeftColor = m ? m.color : 'var(--m-none)';
+        card.innerHTML = `
+          <div class="entry-top">
+            <div class="entry-mood"><span class="dot" style="background:${m ? m.color : 'var(--m-none)'}"></span>${m ? m.label : '未分類'}</div>
+            <div class="entry-time">${formatTime(e.ts)}</div>
+          </div>
+          <p class="entry-text"></p>
+          <div class="entry-actions"><button class="del-btn">刪除</button></div>
+        `;
+        card.querySelector('.entry-text').textContent = e.text;
+        attachDelete(card.querySelector('.del-btn'), e.id);
+        groupEl.appendChild(card);
+      });
+      entriesEl.appendChild(groupEl);
+    });
+  }
+
+  // ---------- memories ("N years ago today") ----------
+  function computeMemories(){
+    const today = new Date();
+    const tm = today.getMonth(), td = today.getDate(), ty = today.getFullYear();
+    return entries
+      .filter(e => {
+        const d = new Date(e.ts);
+        return d.getMonth() === tm && d.getDate() === td && d.getFullYear() < ty;
+      })
+      .sort((a,b) => b.ts - a.ts);
+  }
+
+  function renderMemories(){
+    memoryWrap.innerHTML = '';
+    if (memoriesDismissed || memories.length === 0) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'memory-wrap';
+
+    const head = document.createElement('div');
+    head.className = 'memory-head';
+    head.innerHTML = `<span class="memory-title">回顧・那一天的你</span><button class="memory-close" id="memoryCloseBtn">關閉 ✕</button>`;
+    wrap.appendChild(head);
+
+    memories.forEach(e => {
+      const yearsAgo = new Date().getFullYear() - new Date(e.ts).getFullYear();
+      const m = moodMap[e.mood];
+      const card = document.createElement('div');
+      card.className = 'memory-card';
+      card.innerHTML = `
+        <div class="memory-badge">${yearsAgo} 年前的今天</div>
+        <div class="memory-top">
+          <div class="entry-mood"><span class="dot" style="background:${m ? m.color : 'var(--m-none)'}"></span>${m ? m.label : '未分類'}</div>
+          <div class="entry-time">${formatTime(e.ts)}</div>
+        </div>
+        <p class="memory-text"></p>
+      `;
+      card.querySelector('.memory-text').textContent = e.text;
+      wrap.appendChild(card);
+    });
+
+    memoryWrap.appendChild(wrap);
+    $('memoryCloseBtn').addEventListener('click', () => {
+      memoriesDismissed = true;
+      renderMemories();
+    });
+  }
+
+  // ---------- weekly stats ----------
+  function getWeekRange(date){
+    const d = new Date(date);
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diffToMonday);
+    monday.setHours(0,0,0,0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23,59,59,999);
+    return { monday, sunday };
+  }
+
+  function renderWeeklyStats(){
+    const { monday, sunday } = getWeekRange(new Date());
+    const weekEntries = entries.filter(e => e.ts >= monday.getTime() && e.ts <= sunday.getTime());
+
+    const rangeLabel = `${monday.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})} – ${sunday.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}`;
+
+    const counts = {};
+    MOODS.forEach(m => counts[m.id] = 0);
+    weekEntries.forEach(e => { if (counts[e.mood] !== undefined) counts[e.mood]++; });
+
+    const total = weekEntries.length;
+    const maxCount = Math.max(1, ...Object.values(counts));
+
+    let topMoodHtml = '';
+    if (total > 0){
+      const topId = Object.keys(counts).reduce((a,b) => counts[b] > counts[a] ? b : a);
+      if (counts[topId] > 0){
+        const m = moodMap[topId];
+        topMoodHtml = `<div class="stats-top">這週你最常感到 <b>${m.label}</b>（${counts[topId]} 次），共紀錄 ${total} 則。</div>`;
+      }
+    }
+
+    const rowsHtml = MOODS.map(m => {
+      const count = counts[m.id];
+      const widthPct = total > 0 ? (count / maxCount) * 100 : 0;
+      return `
+        <div class="stat-row">
+          <div class="stat-label">${m.label}</div>
+          <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${widthPct}%; background:${m.color}"></div></div>
+          <div class="stat-count">${count}</div>
+        </div>`;
+    }).join('');
+
+    statsCard.innerHTML = `
+      <div class="stats-head">
+        <div class="stats-title">本週心情統計</div>
+        <div class="stats-range">${rangeLabel}</div>
+      </div>
+      ${ total === 0 ? '<div class="stats-empty">這週還沒有紀錄，寫下第一則吧。</div>' : topMoodHtml }
+      ${ total > 0 ? rowsHtml : '' }
+    `;
+  }
+
+  function renderAll(){
+    renderMemories();
+    renderWeeklyStats();
+    renderSpectrum();
+    renderEntries();
+  }
+
+  // ---------- init ----------
+  (async function init(){
+    entries = await loadEntries();
+    entries.sort((a,b) => b.ts - a.ts);
+    memories = computeMemories();
+    renderAll();
+  })();
+
+})();
+</script>
+
+</body>
+</html>
